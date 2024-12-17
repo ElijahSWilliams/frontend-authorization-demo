@@ -9,6 +9,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import * as auth from "../utils/auth";
 import { setToken, getToken } from "../utils/token";
 import * as api from "../utils/api";
+import { useEffect } from "react";
 
 function App() {
   const [userData, setUserData] = useState({ username: "", email: "" });
