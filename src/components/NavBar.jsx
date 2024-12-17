@@ -1,8 +1,21 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { removeToken } from "../utils/token";
 import Logo from "./Logo";
 import "./styles/NavBar.css";
 
-function NavBar() {
+function NavBar({ setIsLoggedIn }) {
+  // Invoke the hook.
+  const navigate = useNavigate();
+
+  // The signOut function removes the token from local
+  // storage, sends them back to the login page, and
+  // sets isLoggedIn to false.
+  function signOut() {
+    removeToken();
+    navigate("/login");
+    setIsLoggedIn(false);
+  }
+
   return (
     <div className="navbar">
       <div className="navbar__logo">
@@ -20,7 +33,9 @@ function NavBar() {
           </NavLink>
         </li>
         <li>
-          <button className="navbar__link navbar__button">Sign Out</button>
+          <button className="navbar__link navbar__button" onClick={signOut}>
+            Sign Out
+          </button>
         </li>
       </ul>
     </div>
