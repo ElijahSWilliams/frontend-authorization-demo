@@ -1,4 +1,10 @@
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import Ducks from "./Ducks";
 import Login from "./Login";
 import MyProfile from "./MyProfile";
@@ -14,33 +20,12 @@ import { useEffect } from "react";
 function App() {
   const [userData, setUserData] = useState({ username: "", email: "" });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   const navigate = useNavigate();
 
-  //check for token on initial page load
-  useEffect(() => {
-    const jwt = getToken();
+  // Invoke the hook. It's necessary to invoke the hook in both
+  // components.
+  const location = useLocation();
 
-    if (!jwt) {
-      //if no token, end function
-      return;
-    }
-
-    // Call the function, passing it the JWT.
-    api
-      .getUserInfo(jwt)
-      .then(({ username, email }) => {
-        // If the response is successful, log the user in, save their
-        // data to state, and navigate them to /ducks.
-        setIsLoggedIn(true);
-        setUserData({ username, email });
-        navigate("/ducks");
-      })
-      .catch(console.error);
-    // TODO - handle JWT
-  }, []);
-
-  // New
   const handleRegistration = ({
     username,
     email,
@@ -51,39 +36,53 @@ function App() {
       auth
         .register(username, password, email)
         .then(() => {
-          // TODO: handle succesful registration
-          navigate("/login"); //Navigate user to login page
+          navigate("/login");
         })
         .catch(console.error);
     }
   };
 
-  // handleLogin accepts one parameter: an object with two properties.
   const handleLogin = ({ username, password }) => {
-    // If username or password empty, return without sending a request.
     if (!username || !password) {
       return;
     }
 
-    // We pass the username and password as positional arguments. The
-    // authorize function is set up to rename `username` to `identifier`
-    // before sending a request to the server, because that is what the
-    // API is expecting.
     auth
       .authorize(username, password)
       .then((data) => {
-        console.log(data);
-        // Verify that a jwt is included before logging the user in.
         if (data.jwt) {
-          setToken(data.jwt); //save token to local storage
-          console.log(data.jwt);
-          setUserData(data.user); // save user's data to state
-          setIsLoggedIn(true); // log the user in
-          navigate("/ducks"); // send them to /ducks
+          setToken(data.jwt);
+          setUserData(data.user);
+          setIsLoggedIn(true);
+
+          // After login, instead of navigating always to /ducks,
+          // navigate to the location that is stored in state. If
+          // there is no stored location, we default to
+          // redirecting to /ducks.
+          const redirectPath = location.state?.from?.pathname || "/ducks";
+          navigate(redirectPath);
         }
       })
       .catch(console.error);
   };
+
+  useEffect(() => {
+    const jwt = getToken();
+
+    if (!jwt) {
+      return;
+    }
+
+    api
+      .getUserInfo(jwt)
+      .then(({ username, email }) => {
+        setIsLoggedIn(true);
+        setUserData({ username, email });
+        // Remove the call to the navigate() hook: it's not
+        // necessary anymore.
+      })
+      .catch(console.error);
+  }, []);
 
   return (
     <Routes>
